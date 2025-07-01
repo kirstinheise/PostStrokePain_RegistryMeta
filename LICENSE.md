@@ -1,0 +1,1 @@
+This work, "[Title of Work]", by [Creator Name(s)], is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License. To view a copy of this license, visit https://creativecommons.org/licenses/by-nc/4.0/deed.en  or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
