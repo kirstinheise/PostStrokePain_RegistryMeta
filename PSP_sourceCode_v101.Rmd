@@ -1,0 +1,451 @@
+---
+title: "PSP source code and data v.1.01"
+author: "Kirstin-Friederike Heise, heisek@musc.edu"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+This R Markdown file has been created and tested under
+R version 4.3.1 (2023-06-16)
+Platform: aarch64-apple-darwin20 (64-bit)
+Running under: macOS 15.5
+
+using Rstudio (rstudioapi_0.15.0), rmarkdown_2.25 and knitr_1.45 and required dependencies.
+
+This script should be placed into the root directory [here called "PSP_Github"] and contain the data directory ["sourceData"] with all csv files as described below.
+
+```{r setup, include=FALSE}
+# move into the data directory and change the root.dir accordingly
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(root.dir = "path/to/PSP_Github/") # *** CHANGE HERE TO LOCAL SYSTEM ***
+
+```
+
+## RETROSPECTIVE ANALYSIS OF POST-STROKE PAIN REPORTS IN LOCAL REPOSITORY
+
+
+Loading required libraries ...
+```{r, include=FALSE}
+
+required_libraries <- c('plyr', 'dplyr', 'easystats', 'ggpubr', 'ggthemes', 'Rmisc', 'readr', 'readxl', 
+'easystats', 'RColorBrewer', 'cols4all', 'sjPlot', 'sjmisc', 'sjlabelled', 'report', 'purrr', 'lubridate', 
+'finalfit', 'flextable', 'likert', 'here', 'kableExtra', 'flextable', 'magrittr', 'correlation', "see")
+                        
+lapply(required_libraries, require, character.only = TRUE)     
+
+theme_set(theme_classic())
+```
+
+Check the files in the data directory.
+
+```{r, include=FALSE}
+   
+data_path = "path/to/PSP_Github/sourceData" # *** CHANGE HERE TO LOCAL SYSTEM ***
+# setwd(data_path)
+# getwd()
+list.files(path=data_path, full.names = TRUE)
+
+```
+
+Loading the source data...
+
+```{r, include=FALSE}
+
+psp_dat1.df <- read.csv("./sourceData/psp_dat1.csv")
+psp_dat2.df <- read.csv("./sourceData/psp_dat2.csv")
+psp_dat3.df <- read.csv("./sourceData/psp_dat3.csv")   
+psp_dat4.df <- read.csv("./sourceData/psp_dat4.csv")       
+psp_dat5.df <- read.csv("./sourceData/psp_dat5.csv")           
+psp_dat6.df <- read.csv("./sourceData/psp_dat6.csv") 
+
+
+```
+
+#    PAIN INTENSITY, FREQUENCY, AND LOCATION RESPONSES
+ 
+```{r, include=FALSE}
+data <- psp_dat4.df
+
+# str(data)
+```
+
+##   Fig. 1A - Intensity of perceived pain
+
+Pain intensity levels assessed with Wong-Baker Faces scale converted to numerical scale: 
+           from = c(0, 2, 4, 6, 8, 10),
+           to = c("No Hurt","Hurts Little Bit","Hurts Little More","Hurts Even More", "Hurts Whole Lot","Hurts Worst")
+
+```{r}
+
+levels(as.factor(data$PainIntensityScore))
+length(data$PainIntensityScore)
+
+data %>%
+  dplyr::filter(!is.na(PainIntensityScore)) %>%
+  mutate(How.Often = factor(How.Often)) %>%
+  group_by(PainIntensityScore, Gender) %>%
+  tally()
+
+temp <- data %>%
+  dplyr::filter(!is.na(PainIntensityScore)) 
+
+temp$PainIntensityScore  <-  plyr::mapvalues(temp$PainIntensityScore ,
+                                                       from = c(0, 2, 4, 6, 8, 10),
+                                                       to = c("No Hurt","Hurts Little Bit","Hurts Little More","Hurts Even More", "Hurts Whole Lot","Hurts Worst"))
+
+temp$PainIntensityScore  <- factor(temp$PainIntensityScore, levels = c("No Hurt","Hurts Little Bit","Hurts Little More","Hurts Even More", "Hurts Whole Lot","Hurts Worst"))
+levels(temp$PainIntensityScore)
+                                          
+items <- data.frame(temp[, c("PainIntensityScore")])
+# str(items)
+
+items_likert <- items %>%
+  likert()
+
+
+p2 <- plot(items_likert, 
+           group.oder = names(items),
+           plot.percents = TRUE, 
+           plot.percent.low = FALSE, 
+           plot.percent.high = FALSE, 
+           centered = FALSE, 
+           wrap = 30)
+
+p2 + scale_fill_brewer(palette = "OrRd", direction = 1)
+
+```
+
+
+##   Fig. 1B - Frequency of perceived pain
+
+```{r, include=FALSE}
+# str(data)
+levels(as.factor(data$How.Often))
+
+data %>%
+  dplyr::filter(!is.na(How.Often)) %>%
+  mutate(How.Often = factor(How.Often)) %>%
+  group_by(How.Often, Gender) %>%
+  tally()
+
+temp <- data %>%
+  dplyr::filter(!is.na(How.Often)) 
+
+temp$PainFreq <-factor(temp$How.Often, levels = c("less_than_one_day", "one_to_three_days",  "most_days", "every_day"))
+levels(temp$PainFreq)
+
+items <- data.frame(temp[, c("PainFreq")])
+
+items_likert <- items %>%
+  likert()
+
+```
+
+```{r}
+p1 <- plot(items_likert,
+     group.oder = names(items),
+     plot.percents = TRUE,
+     plot.percent.low = FALSE,
+     plot.percent.high = FALSE,
+     centered = FALSE,
+     wrap = 30)
+
+p1 + scale_fill_brewer(palette = "RdPu")
+
+```
+
+
+## Fig. 1C -  Location of perceived pain
+    In % of the respective subgroup N
+
+```{r, include=FALSE}
+
+data %>%
+  group_by(Gender) %>%
+  summarize(across(5:24, sum))
+
+data %>%
+  group_by(Experienced.Pain) %>%
+  tally()
+
+pain_loc <- data %>%
+  dplyr::filter(Experienced.Pain == "yes") %>%
+  tidyr::pivot_longer(
+    cols = "Pain.Location.Head" : "Pain.Location.Shoulder.Unaffected", 
+    names_to = "pain_location",
+    names_prefix = "Pain.Location.",
+    values_to = "painloc_eval",
+    values_drop_na = FALSE
+  )
+
+ levels(as.factor(pain_loc$pain_location))
+ pain_loc$pain_location  <-  plyr::mapvalues(pain_loc$pain_location ,
+                                              from = c("Hand.Unaffected...22", "Hand.Unaffected...23", "Knee.Unaffected...24", "Knee.Unaffected...25"),
+                                              to = c("Hand.Unaffected","Hand.Unaffected", "Knee.Unaffected", "Knee.Unaffected" ))
+ painLw <- pain_loc %>%
+   tidyr::pivot_wider(
+     id_cols = c("Study.ID", "DateOfEvaluation", "Gender", "Race", "Ethnicity", "LesionHemisphere", "age.at.stroke"),
+     names_from = "pain_location", 
+     values_from = "painloc_eval",
+     values_fn = mean
+   )
+ 
+
+ 
+
+ pain_recoded <- painLw %>%
+   mutate(across(8:25,
+                 ~.x %>%
+                   zap_labels() %>%
+                   as.logical()
+   ))
+ 
+
+ 
+N <- length(unique(pain_recoded$Study.ID))
+Nm <- pain_recoded %>%
+  dplyr::filter(Gender == "Male")  %>%
+  distinct(Study.ID) %>%
+  tally()
+Nw = N-Nm
+
+Loc_summary <- pain_recoded %>%
+  group_by(Gender) %>%
+   summarize(across(where(is.logical), sum))
+
+Loc_sum <- Loc_summary %>%
+  tidyr::pivot_longer(
+    cols = Head : Shoulder.Unaffected, 
+    names_to = "Pain_location",
+    # names_prefix = "Pain Location ",
+    values_to = "Count",
+    values_drop_na = FALSE
+  )
+
+Loc_sum$Pain_location<-factor(Loc_sum$Pain_location, levels = c(   "Head",  "Neck"  , "Chest.Breast"    , "Belly" , "Upper.Back" , "Lower.Back",    
+                                                                       "Hand.Affected",  "Arm.Affected",  "Shoulder.Affected" , "Foot.Affected" ,"Knee.Affected" , "Hip.Affected",
+                                                                      "Hand.Unaffected" ,  "Arm.Unaffected", "Shoulder.Unaffected" , "Foot.Unaffected", "Knee.Unaffected" ,"Hip.Unaffected"))
+
+```
+
+
+```{r}
+
+Loc_perc <- Loc_sum %>%
+group_by(Gender) %>%
+  mutate(Count_Gender = sum(Count)) %>%
+  group_by(Gender) %>%
+  mutate(freq = Count/Count_Gender, 
+         freq_perc = freq*100 %>%
+           round(2))
+
+Loc_perc %>%
+  ggplot(aes(x = forcats::fct_rev(Pain_location), y = freq_perc, fill = Gender)) +
+  geom_bar(position = position_dodge(0.8), stat = "identity") +
+  scale_fill_discrete_c4a_div() +
+  coord_flip() +
+  theme_classic()
+
+```
+
+
+
+
+## Fig. 1D - Direct question for pain in the affected upper extremity (yes/no)
+
+```{r, include=FALSE}
+legend_pal <- brewer.pal(name = "RdBu", n = 3)
+legend_pal <- gsub("#F7F7F7", "#9C9C9C", legend_pal)
+
+
+noPain_sum <- unique.data.frame( psp_dat6.df[, c("RESTORE.ID", "subjType", "noArmPain")]) %>%
+  group_by(noArmPain) %>%  # grouping by these two variables 
+  tally() %>%  # counting the number of responses
+  mutate(perc = n / sum(n) * 100) %>%
+  dplyr::select(-n) #%>%
+# tidyr::spread(noArmPain, perc)
+
+noPain_sum$noArmPain <- as.factor(noPain_sum$noArmPain )
+```
+
+
+```{r, include_graphics}
+
+ggplot() +
+    geom_bar(data = noPain_sum, aes( x= as.factor(1), y=perc, fill = noArmPain), stat="identity") +
+    geom_hline(yintercept = 50, color =c("black")) +
+    scale_fill_manual(values = legend_pal,
+                      labels = c("pain", "no pain")) +
+    coord_flip() +
+    labs(x = "", y = "Percentage of respondents (%)") +
+    ggtitle("RESTORE: Pain in the paretic arm?") +
+    theme_classic() + theme(legend.title = element_blank())
+
+```
+
+
+## Fig. 1E - PREDICTORS FOR PAIN REPORTING IN THE AFECTED UPPER EXTREMITY
+ Logistic regression with Pain in the affected upper extremity (yes/no binary variable, reference "no pain") as dependent variable
+ 
+ *without Ethnicity due to singularity*
+
+```{r, include=FALSE}
+psp_dat1.df$Gender <- as.factor(psp_dat1.df$Gender)
+psp_dat1.df$LesionHemisphere <- as.factor(psp_dat1.df$LesionHemisphere)
+psp_dat1.df$Race <- as.factor(psp_dat1.df$Race)
+psp_dat1.df$affectedArmPain <-  as.factor(psp_dat1.df$affectedArmPain)
+
+levels(psp_dat1.df$affectedArmPain) # first level given will be reference, i.e., within the. model, the influence of the predictor on the presence of pain will be tested
+
+
+data <- psp_dat1.df[, c("RESTORE.ID", "affectedArmPain", "time.post.stroke", "Gender", "Race", "LesionHemisphere", "age.at.stroke", "age.at.assessment")] %>%
+  dplyr::filter(! LesionHemisphere %in% c("", "Unknown") & ! Race %in% c("", "Unknown")) %>%
+  droplevels()
+
+data$Gender <- relevel(data$Gender, ref = "Male")
+data$LesionHemisphere <- relevel(data$LesionHemisphere, ref = "Left")
+data$Race <- relevel(data$Race, ref = "White or Caucasian")
+min(data$time.post.stroke, na.rm = TRUE)
+
+
+```
+
+
+```{r}
+dependent = "affectedArmPain"
+explanatory = c("time.post.stroke", "age.at.stroke", "Gender", "LesionHemisphere", "Race") #, "Ethnicity")
+
+
+data  %>%
+  or_plot(dependent, explanatory,
+          dependent_label = "pain in the affected UE",
+          remove_ref = FALSE,
+          breaks = c(0.5, 1, 5, 10, 20, 30))
+
+
+
+```
+
+
+
+*ADDITIONAL PLOTS OF PARAMETER ESTIMATES (not included in the manuscript) to visualize the influence of individual parameters on odds ratio of reporting pain in the affected upper extremity.*
+
+```{r}
+
+m3new <- glm(affectedArmPain ~ time.post.stroke,
+          data = data,
+          family = "binomial")
+
+tab_model(m3new)
+report(m3new)
+
+plot_model(m3new, type = "pred", terms = "time.post.stroke [all]") + labs(y = ("p[affected arm pain]"), x = "days post stroke")
+
+m7new <- glm(affectedArmPain ~ Gender + time.post.stroke + age.at.assessment + LesionHemisphere + Race ,
+          data = data, 
+          family = "binomial")
+
+tab_model(m7new)
+
+plot_model(m7new, type = "pred", terms = c("time.post.stroke [all]", "Gender", "LesionHemisphere")) + labs(y = ("p[affected arm pain]"), x = "days post stroke")
+
+plot_model(m7new, type = "pred", terms = c("age.at.assessment [all]", "Gender", "LesionHemisphere")) + labs(y = ("p[affected arm pain]"))
+
+plot_model(m7new, type = "pred", terms = c("Gender", "Race")) + labs(y = ("p[affected arm pain]"))
+plot_model(m7new, type = "pred", terms = c("Race", "Gender")) + labs(y = ("p[affected arm pain]"))
+
+report(m7new)
+
+```
+
+
+## Fig. 1F - Association between depression/anxiety assessed with PHQ-8 and perceived pain intensity (including 0 = no pain)
+
+*Interpretation of PHQ-8 Scores: 
+0-4: No significant depressive symptoms;
+5-9: Mild depression;
+10-14: Moderate depression;
+15-19: Moderately severe depression;
+20-24: Severe depression; a score of 10 or higher is generally considered indicative of clinically significant depression. *
+
+
+```{r}
+
+psp_dat2.df[, c("PainIntensityScore", "PHQtotal")] %>%
+  correlation()  
+
+
+psp_dat2.df%>%
+ggplot(aes(x = PainIntensityScore, y = PHQtotal)) +
+  geom_jitter(size = 2, width = 0.3, alpha = 0.6) +
+  geom_smooth(colour = "black", method = "lm", se = TRUE) +
+  geom_hline(yintercept = 10, color =c("red"), linetype='dashed') +
+  theme_classic()
+
+```
+
+
+#   Fig. 1G - Correlation between EQ5 sub-domains
+
+
+```{r}
+
+eqord <- c(6:11)
+
+eq5_corr <- correlation(psp_dat5.df[eqord], method = "kendall")
+eq2 <- summary(eq5_corr)
+summary(eq5_corr)
+
+
+peq2 <- plot(eq2)
+peq2 +    theme_modern()
+
+```
+
+
+## Fig. 1H - Association between pain and stroke-specific QoL measured with SIS (3.0) 
+
+The SIS 3.0 is comprised of 8 subscales or ‘Domains’:
+Strength
+Hand function
+ADL/IADL
+Mobility
+Communication
+Emotion
+Memory and thinking
+Participation
+A final single-item domain measures perceived recovery since stroke onset.
+
+Domains are scored on a 1-5 Likert Scale with 
+1 = an inability to complete the item
+5 = no difficulty experienced at all.
+Domain scores range from 0-100 and are calculated using the following equation:
+Domain score = [(Mean item score – 1) / 5-1 ] x 100.
+
+A final single-item Recovery domain assesses the individual’s perception of his/her recovery from stroke, measured in the form of a visual analogue scale from 0-100, where:
+0 = no recovery
+100 = full recovery.
+
+as described on: 
+https://strokengine.ca/en/assessments/stroke-impact-scale-sis/
+
+
+
+```{r}
+psp_dat3.df %>%
+correlation(select = c("PainIntensityScore"), 
+            select2 = c("Physical", "Memory", "Emotion", 
+                        "Communication", "ADL", "Mobility", 
+                        "Handfunction", "Participation", "Recovery")
+            )  
+
+
+psp_dat3.df%>%
+ggplot(aes(x = PainIntensityScore, y = Participation)) +
+  geom_jitter(width = 0.4, alpha = 0.5, size = 2) +
+  geom_smooth(colour = "red", method = "lm", se = TRUE) +
+  theme_classic()
+
+
+```
+
