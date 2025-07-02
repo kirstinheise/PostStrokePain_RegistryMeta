@@ -4,3 +4,6 @@ Code and source data to reproduce analyses and figures presented in the retrospe
 
 Cite as: 
 >>zenodo doi here<<
+
+Download analysis script (Rmd file) and data into the same directory. The unzipped sourceData folder conatains six separate csv files.
+
