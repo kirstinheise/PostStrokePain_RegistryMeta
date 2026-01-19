@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this data and code, please cite it as below."
+authors:
+- family-names: "Heise"
+  given-names: "Kirstin-Friederike"
+  orcid: "https://orcid.org/0000-0003-3666-8531"
+title: "PostStrokePain_RegistryMeta"
+version: 1.0.0
+date-released: 2026-01-19
+url: "https://github.com/kirstinheise/PostStrokePain_RegistryMeta"
