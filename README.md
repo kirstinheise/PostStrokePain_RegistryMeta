@@ -1,9 +1,8 @@
 # Post Stroke Pain (PSP) -  Retrospective Meta-Analysis of Repository Data
 Code and source data to reproduce analyses and figures presented in the retrospective analysis of a local stroke registry at MUSC described in 
 
-_The Overlooked Burden of Post-Stroke Pain: Retrospective analysis of a Real-World Registry of Chronic Stroke Survivors_
-Heise, KF; Nichols, M; Chesnutt, A; Dellenbach, B; Finetto, P;  Dean, JC; Knight, H;  MS; Finetto, C;  Seo, NJ; Woodbury, ML; Thompson, A; Adams, RJ; Kautz, SA 
-accepted for publication in JAHA 2026
+Heise, KF; Nichols, M; Chesnutt, A; Dellenbach, B; Finetto, P;  Dean, JC; Knight, H;  MS; Finetto, C;  Seo, NJ; Woodbury, ML; Thompson, A; Adams, RJ; Kautz, SA. The Overlooked Burden of Post-Stroke Pain: Retrospective analysis of a Real-World Registry of Chronic Stroke Survivors.
+_accepted for publication in JAHA 2026_
 >>bibliographics doi to be updated
 
 Cite as: 
