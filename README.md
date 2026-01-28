@@ -5,7 +5,7 @@ Heise, KF; Nichols, M; Chesnutt, A; Dellenbach, B; Finetto, P;  Dean, JC; Knight
 _JAHA_; DOI: 10.1161/JAHA.125.044834
 
 Cite as: 
->>zenodo doi to be added
+Heise, K.-F. (2026). PostStrokePain_RegistryMeta (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.18405116
 
 Download analysis script (Rmd file) and data into the same directory. The unzipped sourceData folder contains six separate csv files. The Rmd file includes instructions on required R libraries to reproduce the reported analyses and figures. 
 
